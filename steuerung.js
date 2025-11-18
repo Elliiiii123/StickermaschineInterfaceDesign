@@ -18,8 +18,14 @@ const symbols = [
   'symbol5.png'
 ];
 let currentSymbolIndex = 0;
-
 let currentPhraseIndex = 0; // Start bei Spruch 1
+let isPrinting = false; // verhindert mehrfaches Auslösen auf dem Druck-Screen
+let highlightedText = null;
+// Lade die gespeicherte Auswahl, falls vorhanden
+let lastModeSelection = localStorage.getItem('modeSelection') || 'selbermachen'; // Default-Wert 'selbermachen'
+console.log('Steuerung geladen, Screen:', document.body.dataset.screen);
+let isSelected = false; // Diese Variable überwacht, ob eine Auswahl getroffen wurde
+let isColorSelected = false;
 
 // globaler Key-Listener für ALLE Seiten
 document.addEventListener('keydown', function (event) {
@@ -31,8 +37,57 @@ document.addEventListener('keydown', function (event) {
   }
 
     // Pfeiltasten sollen auch nicht scrollen
-  if (event.code === 'ArrowUp' || event.code === 'ArrowDown') {
+  if (event.code === 'ArrowUp' || event.code === 'ArrowDown' || event.code === 'ArrowLeft') {
     event.preventDefault();
+  }
+
+    // ========== Rückwärts-Navigation ==========
+  if (event.code === 'ArrowLeft') {
+    switch (screen) {
+      // ========== STARTDISPLAY (keine Rück-Navigation) ==========
+      case 'startdisplay':
+        // Keine Rück-Navigation auf dieser Seite
+        break;
+
+      // ========== MODUSWAHL ==========
+      case 'mode':
+        window.location.href = 'startdisplay.html';  // Zurück zur Startseite
+        break;
+
+      // ========== SPRUCHWAHL ==========
+      case 'spruch':
+        window.location.href = 'modus.html';  // Zurück zur Moduswahl
+        break;
+
+      // ========== SYMBOLWAHL ==========
+      case 'symbol':
+        window.location.href = 'spruchwahl.html';  // Zurück zur Spruchwahl
+        break;
+
+      // ========== FARBWAHL ==========
+      case 'farbe':
+        window.location.href = 'symbolwahl.html';  // Zurück zur Symbolwahl
+        break;
+
+      // ========== PRÄSENTATION ==========
+      case 'druck': {
+        // Überprüfen, ob "random" oder "selbermachen" aktiviert ist
+        if (lastModeSelection === 'random') {
+          window.location.href = 'modus.html';  // Zurück zur Moduswahl bei Random
+        } else {
+          window.location.href = 'symbolwahl.html';  // Zurück zur Symbolwahl bei Selbermachen
+        }
+        break;
+      }
+
+      // ========== GEDRUCKT ==========
+      case 'done':
+        // Keine Rück-Navigation auf dieser Seite
+        break;
+
+      default:
+        break;
+    }
   }
 
   switch (screen) {
@@ -44,11 +99,39 @@ document.addEventListener('keydown', function (event) {
       break;
 
     // ========== MODUSWAHL ==========
-    case 'mode':
-      if (event.code === 'Space') {
-        window.location.href = 'spruchwahl.html';
+    case 'mode': {
+      const randomText = document.getElementById('mod-1');
+      const selbText = document.getElementById('mod-2');
+      
+      if (!randomText || !selbText) break; // wenn es das Element nicht gibt, nichts tun
+
+      if (event.code === 'ArrowDown') {
+        // Pfeil nach unten: "Selber machen" soll größer werden
+        highlightText('mod-2', randomText, selbText);
+        isSelected = true;
+        lastModeSelection = 'selbermachen'; // Speichern der Auswahl
+        localStorage.setItem('modeSelection', 'selbermachen');  // Speichern in localStorage
       }
+
+      if (event.code === 'ArrowUp') {
+        // Pfeil nach oben: "Random" soll größer werden
+        highlightText('mod-1', randomText, selbText);
+        isSelected = true; // Auswahl getroffen
+        lastModeSelection = 'random'; // Speichern der Auswahl
+        localStorage.setItem('modeSelection', 'random');  // Speichern in localStorage
+      }
+
+      if (event.code === 'Space' && isSelected) {
+        // Weiterleitung je nach Auswahl:
+        if (lastModeSelection === 'random') {
+          window.location.href = 'praesentation.html'; // Gehe direkt zu Präsentation
+        } else {
+          window.location.href = 'spruchwahl.html'; // Gehe zu Spruchwahl
+        }
+      }
+
       break;
+    }
 
     // ========== SPRUCHWAHL ==========
     case 'spruch':
@@ -102,16 +185,35 @@ document.addEventListener('keydown', function (event) {
     }
 
     // ========== FARBWAHL ==========
-    case 'farbe':
-      if (event.code === 'Space') {
+    case 'farbe': {
+      const whiteText = document.getElementById('color-1');
+      const blackText = document.getElementById('color-2');
+      
+      if (!whiteText || !blackText) break; // wenn es das Element nicht gibt, nichts tun
+
+      if (event.code === 'ArrowDown') {
+        // Pfeil nach unten: "Schwarz" soll größer werden
+        highlightText('color-2', whiteText, blackText);
+        isColorSelected = true; 
+      }
+
+      if (event.code === 'ArrowUp') {
+        // Pfeil nach oben: "Weiß" soll größer werden
+        highlightText('color-1', whiteText, blackText);
+        isColorSelected = true; 
+      }
+
+      if (event.code === 'Space'&& isColorSelected) {
         window.location.href = 'praesentation.html';
       }
       break;
+    }
 
     // ========== DRUCK-VORSCHAU ==========
     case 'druck':
-      if (event.code === 'Space') {
-        window.location.href = 'gedruckt.html';
+      if ((event.code === 'Space' || event.code === 'Enter') && !isPrinting) {
+        isPrinting = true;
+        startPrintAndRedirect();
       }
       break;
 
@@ -123,3 +225,27 @@ document.addEventListener('keydown', function (event) {
       break;
   }
 });
+
+function startPrintAndRedirect() {
+  const overlay = document.getElementById('print-overlay');
+  if (overlay) {
+    overlay.hidden = false;          // Overlay anzeigen
+  }
+
+  setTimeout(function () {
+    window.location.href = 'gedruckt.html';
+  }, 3000);                          // 3000 ms = 3 Sekunden
+}
+
+// Funktion zum Hervorheben eines Textes
+function highlightText(id, oldElement1, oldElement2) {
+  // Zurücksetzen der Schriftgröße des vorherigen Textes
+  oldElement1.style.fontSize = '8rem';
+  oldElement2.style.fontSize = '8rem';
+
+  // Das neue Element hervorheben
+  const newElement = document.getElementById(id);
+  newElement.style.fontSize = '10rem'; // neue größere Größe
+  
+  highlightedText = id; // Tracken des aktuell hervorgehobenen Textes
+}
