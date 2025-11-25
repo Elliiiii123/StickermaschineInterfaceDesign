@@ -1,17 +1,30 @@
 console.log('steuerung.js geladen – Screen:', document.body.dataset.screen);
 
+// ===== Auswahllisten =====
+
 // Spruch-Liste für spruchwahl.html
 const phrases = [
-  'Love Cats hate Fascism',
-  'Nazi Freie Zone',
-  'Ruhig Brauner',
-  'Nazis verschwinden!',
-  'Antifaschismus zum Aufkleben',
-  'Sorry, der Nazisticker war hässlich',
-  'Upsi, hier stand mal was Peinliches'
+  'Love Cats hate Fascism',            // 0 -> Cats
+  'Nazi Freie Zone',                   // 1 -> NFZ
+  'Ruhig Brauner',                     // 2 -> Ruhig
+  'Nazis verschwinden!',               // 3 -> Verschwinden
+  'Antifaschismus zum Aufkleben',      // 4 -> Anti
+  'Sorry, der Nazisticker war hässlich', // 5 -> Sorry
+  'Upsi, hier stand mal was Peinliches'  // 6 -> UPSI
 ];
 
-// Symbol-Liste für symbolwahl.html
+// Codes in der gleichen Reihenfolge wie oben
+const phraseCodes = [
+  'Cats',
+  'NFZ',
+  'Ruhig',
+  'Verschwinden',
+  'Anti',
+  'Sorry',
+  'UPSI'
+];
+
+// Symbol-Liste für symbolwahl.html (Dateipfade)
 const symbols = [
   'Symbole/JustText.png',
   'Symbole/Cat.png',
@@ -19,37 +32,77 @@ const symbols = [
   'Symbole/Fist.png',
   'Symbole/Spray.png'
 ];
-let currentSymbolIndex = 0;
-let currentPhraseIndex = 0; // Start bei Spruch 1
 
+// Codes passend zu den Dateinamen
+const symbolCodes = [
+  'JustText',
+  'Cat',
+  'Fairy',
+  'Fist',
+  'Spray'
+];
+
+let currentSymbolIndex = 0;
+let currentPhraseIndex = 0;
 let isPrinting = false; // verhindert mehrfaches Auslösen auf dem Druck-Screen
 let highlightedText = null;
-// Lade die gespeicherte Auswahl, falls vorhanden
-let lastModeSelection = localStorage.getItem('modeSelection') || 'selbermachen'; // Default-Wert 'selbermachen'
-console.log('Steuerung geladen, Screen:', document.body.dataset.screen);
-let isSelected = false; // Diese Variable überwacht, ob eine Auswahl getroffen wurde
+let isSelected = false; // Modus-Auswahl getroffen?
 let isColorSelected = false;
+let currentColor = null; // 'White' oder 'Black'
 
-// === Initialzustand beim Laden setzen ===
+// Mode-Auswahl laden (random / selbermachen)
+let lastModeSelection = localStorage.getItem('modeSelection') || 'selbermachen';
+console.log('Steuerung geladen, Screen:', document.body.dataset.screen);
+
+// ===== Initialzustand beim Laden setzen =====
 const initialScreen = document.body.dataset.screen || 'unknown';
 
-// Spruchwahl: direkt ersten Spruch aus dem Array anzeigen
+// Spruchwahl: direkt ersten Spruch anzeigen & speichern
 if (initialScreen === 'spruch') {
   const phraseElement = document.querySelector('.phrase-text');
   if (phraseElement) {
-    phraseElement.textContent = phrases[currentPhraseIndex]; // = phrases[0]
+    currentPhraseIndex = parseInt(localStorage.getItem('selectedPhraseIndex') || '0', 10);
+    if (isNaN(currentPhraseIndex) || currentPhraseIndex < 0 || currentPhraseIndex >= phrases.length) {
+      currentPhraseIndex = 0;
+    }
+    phraseElement.textContent = phrases[currentPhraseIndex];
+    localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
   }
 }
 
-// Symbolwahl: direkt erstes Symbol anzeigen
+// Symbolwahl: erstes Symbol anzeigen & speichern
 if (initialScreen === 'symbol') {
   const symbolImg = document.querySelector('.symbol-image');
   if (symbolImg) {
-    symbolImg.src = symbols[currentSymbolIndex]; // = symbols[0]
+    currentSymbolIndex = parseInt(localStorage.getItem('selectedSymbolIndex') || '0', 10);
+    if (isNaN(currentSymbolIndex) || currentSymbolIndex < 0 || currentSymbolIndex >= symbols.length) {
+      currentSymbolIndex = 0;
+    }
+    symbolImg.src = symbols[currentSymbolIndex];
+    localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
   }
 }
 
-// globaler Key-Listener für ALLE Seiten
+// Farbwahl: ggf. vorherige Auswahl laden
+if (initialScreen === 'farbe') {
+  const savedColor = localStorage.getItem('selectedColor');
+  if (savedColor === 'White' || savedColor === 'Black') {
+    currentColor = savedColor;
+    isColorSelected = true;
+  }
+}
+
+// Präsentation / Drucken & Gedruckt-Screen: Sticker setzen
+if (initialScreen === 'druck' || initialScreen === 'done') {
+  const stickerImg = document.querySelector('.sticker-preview');
+  if (stickerImg) {
+    const path = getStickerPath();
+    stickerImg.src = path;
+    console.log('Sticker-Pfad gesetzt:', path);
+  }
+}
+
+// ===== globaler Key-Listener für ALLE Seiten =====
 document.addEventListener('keydown', function (event) {
   const screen = document.body.dataset.screen || 'unknown';
 
@@ -58,180 +111,159 @@ document.addEventListener('keydown', function (event) {
     event.preventDefault();
   }
 
-    // Pfeiltasten sollen auch nicht scrollen
+  // Pfeiltasten sollen auch nicht scrollen
   if (event.code === 'ArrowUp' || event.code === 'ArrowDown' || event.code === 'ArrowLeft') {
     event.preventDefault();
   }
 
-    // ========== Rückwärts-Navigation ==========
+  // ========== Rückwärts-Navigation ==========
   if (event.code === 'ArrowLeft') {
     switch (screen) {
-      // ========== STARTDISPLAY (keine Rück-Navigation) ==========
       case 'startdisplay':
-        // Keine Rück-Navigation auf dieser Seite
         break;
-
-      // ========== MODUSWAHL ==========
       case 'mode':
-        window.location.href = 'startdisplay.html';  // Zurück zur Startseite
+        window.location.href = 'startdisplay.html';
         break;
-
-      // ========== SPRUCHWAHL ==========
       case 'spruch':
-        window.location.href = 'modus.html';  // Zurück zur Moduswahl
+        window.location.href = 'modus.html';
         break;
-
-      // ========== SYMBOLWAHL ==========
       case 'symbol':
-        window.location.href = 'spruchwahl.html';  // Zurück zur Spruchwahl
+        window.location.href = 'spruchwahl.html';
         break;
-
-      // ========== FARBWAHL ==========
       case 'farbe':
-        window.location.href = 'symbolwahl.html';  // Zurück zur Symbolwahl
+        window.location.href = 'symbolwahl.html';
         break;
-
-      // ========== PRÄSENTATION ==========
       case 'druck': {
-        // Überprüfen, ob "random" oder "selbermachen" aktiviert ist
         if (lastModeSelection === 'random') {
-          window.location.href = 'modus.html';  // Zurück zur Moduswahl bei Random
+          window.location.href = 'modus.html';
         } else {
-          window.location.href = 'symbolwahl.html';  // Zurück zur Symbolwahl bei Selbermachen
+          window.location.href = 'symbolwahl.html';
         }
         break;
       }
-
-      // ========== GEDRUCKT ==========
       case 'done':
-        // Keine Rück-Navigation auf dieser Seite
         break;
-
       default:
         break;
     }
   }
 
+  // ========== Vorwärts-Logik je nach Screen ==========
   switch (screen) {
-    // ========== STARTSEITE ==========
+    // STARTSEITE
     case 'start':
       if (event.code === 'Space') {
         window.location.href = 'modus.html';
       }
       break;
 
-    // ========== MODUSWAHL ==========
+    // MODUSWAHL
     case 'mode': {
       const randomText = document.getElementById('mod-1');
       const selbText = document.getElementById('mod-2');
-      
-      if (!randomText || !selbText) break; // wenn es das Element nicht gibt, nichts tun
+      if (!randomText || !selbText) break;
 
       if (event.code === 'ArrowDown') {
-        // Pfeil nach unten: "Selber machen" soll größer werden
         highlightText('mod-2', randomText, selbText);
         isSelected = true;
-        lastModeSelection = 'selbermachen'; // Speichern der Auswahl
-        localStorage.setItem('modeSelection', 'selbermachen');  // Speichern in localStorage
+        lastModeSelection = 'selbermachen';
+        localStorage.setItem('modeSelection', 'selbermachen');
       }
 
       if (event.code === 'ArrowUp') {
-        // Pfeil nach oben: "Random" soll größer werden
         highlightText('mod-1', randomText, selbText);
-        isSelected = true; // Auswahl getroffen
-        lastModeSelection = 'random'; // Speichern der Auswahl
-        localStorage.setItem('modeSelection', 'random');  // Speichern in localStorage
+        isSelected = true;
+        lastModeSelection = 'random';
+        localStorage.setItem('modeSelection', 'random');
       }
 
       if (event.code === 'Space' && isSelected) {
-        // Weiterleitung je nach Auswahl:
         if (lastModeSelection === 'random') {
-          window.location.href = 'praesentation.html'; // Gehe direkt zu Präsentation
+          // finalStickerPath zurücksetzen, damit neuer Random gewählt wird
+          localStorage.removeItem('finalStickerPath');
+          window.location.href = 'praesentation.html';
         } else {
-          window.location.href = 'spruchwahl.html'; // Gehe zu Spruchwahl
+          window.location.href = 'spruchwahl.html';
         }
       }
-
       break;
     }
 
-    // ========== SPRUCHWAHL ==========
-    case 'spruch':
+    // SPRUCHWAHL
+    case 'spruch': {
       const phraseElement = document.querySelector('.phrase-text');
-
-      // Sicherheit: wenn das Element nicht gefunden wird, nichts tun
       if (!phraseElement) break;
 
       if (event.code === 'ArrowDown') {
-        // nächster Spruch
         currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
         phraseElement.textContent = phrases[currentPhraseIndex];
+        localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
       }
 
       if (event.code === 'ArrowUp') {
-        // vorheriger Spruch
-        currentPhraseIndex =
-          (currentPhraseIndex - 1 + phrases.length) % phrases.length;
+        currentPhraseIndex = (currentPhraseIndex - 1 + phrases.length) % phrases.length;
         phraseElement.textContent = phrases[currentPhraseIndex];
+        localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
       }
 
       if (event.code === 'Space') {
         window.location.href = 'symbolwahl.html';
       }
       break;
+    }
 
-    // ========== SYMBOLWAHL ==========
+    // SYMBOLWAHL
     case 'symbol': {
       const symbolImg = document.querySelector('.symbol-image');
+      if (!symbolImg) break;
 
-      if (!symbolImg) break; // falls irgendwas nicht geladen ist
-
-      // nach unten: nächstes Symbol
       if (event.code === 'ArrowDown') {
         currentSymbolIndex = (currentSymbolIndex + 1) % symbols.length;
         symbolImg.src = symbols[currentSymbolIndex];
+        localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
       }
 
-      // nach oben: vorheriges Symbol
       if (event.code === 'ArrowUp') {
-        currentSymbolIndex =
-          (currentSymbolIndex - 1 + symbols.length) % symbols.length;
+        currentSymbolIndex = (currentSymbolIndex - 1 + symbols.length) % symbols.length;
         symbolImg.src = symbols[currentSymbolIndex];
+        localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
       }
 
-      // Space: weiter zur Farbwahl-Seite
       if (event.code === 'Space') {
-        window.location.href = 'color.html';  // so wie du es schon drin hattest
+        window.location.href = 'color.html';
       }
       break;
     }
 
-    // ========== FARBWAHL ==========
+    // FARBWAHL
     case 'farbe': {
       const whiteText = document.getElementById('color-1');
       const blackText = document.getElementById('color-2');
-      
-      if (!whiteText || !blackText) break; // wenn es das Element nicht gibt, nichts tun
+      if (!whiteText || !blackText) break;
 
       if (event.code === 'ArrowDown') {
-        // Pfeil nach unten: "Schwarz" soll größer werden
         highlightText('color-2', whiteText, blackText);
-        isColorSelected = true; 
+        isColorSelected = true;
+        currentColor = 'Black';
+        localStorage.setItem('selectedColor', 'Black');
       }
 
       if (event.code === 'ArrowUp') {
-        // Pfeil nach oben: "Weiß" soll größer werden
         highlightText('color-1', whiteText, blackText);
-        isColorSelected = true; 
+        isColorSelected = true;
+        currentColor = 'White';
+        localStorage.setItem('selectedColor', 'White');
       }
 
-      if (event.code === 'Space'&& isColorSelected) {
+      if (event.code === 'Space' && isColorSelected) {
+        // finalStickerPath zurücksetzen (falls vorher schon mal gedruckt)
+        localStorage.removeItem('finalStickerPath');
         window.location.href = 'praesentation.html';
       }
       break;
     }
 
-    // ========== DRUCK-VORSCHAU ==========
+    // PRÄSENTATION / DRUCK
     case 'druck':
       if ((event.code === 'Space' || event.code === 'Enter') && !isPrinting) {
         isPrinting = true;
@@ -239,35 +271,81 @@ document.addEventListener('keydown', function (event) {
       }
       break;
 
-    // ========== GEDRUCKT-SCREEN ==========
+    // GEDRUCKT-SCREEN
     case 'done':
       if (event.code === 'Space') {
+        // Reset für neuen Durchlauf
+        localStorage.removeItem('finalStickerPath');
         window.location.href = 'startdisplay.html';
       }
       break;
   }
 });
 
+// ===== Funktionen =====
+
+// Startet „Drucken“ & Redirect
 function startPrintAndRedirect() {
   const overlay = document.getElementById('print-overlay');
   if (overlay) {
-    overlay.hidden = false;          // Overlay anzeigen
+    overlay.hidden = false;
   }
 
   setTimeout(function () {
     window.location.href = 'gedruckt.html';
-  }, 3000);                          // 3000 ms = 3 Sekunden
+  }, 3000);
 }
 
-// Funktion zum Hervorheben eines Textes
+// Text größer/kleiner machen (Modus & Farbe)
 function highlightText(id, oldElement1, oldElement2) {
-  // Zurücksetzen der Schriftgröße des vorherigen Textes
   oldElement1.style.fontSize = '8rem';
   oldElement2.style.fontSize = '8rem';
 
-  // Das neue Element hervorheben
   const newElement = document.getElementById(id);
-  newElement.style.fontSize = '10rem'; // neue größere Größe
-  
-  highlightedText = id; // Tracken des aktuell hervorgehobenen Textes
+  if (newElement) {
+    newElement.style.fontSize = '10rem';
+    highlightedText = id;
+  }
+}
+
+// Ermittelt den finalen Sticker-Pfad
+function getStickerPath() {
+  // Wenn schon bestimmt → wiederverwenden (wichtig für Random)
+  const existing = localStorage.getItem('finalStickerPath');
+  if (existing) {
+    return existing;
+  }
+
+  const mode = localStorage.getItem('modeSelection') || 'selbermachen';
+
+  let phraseCode;
+  let symbolCode;
+  let colorCode;
+
+  if (mode === 'random') {
+    // Komplett zufällige Kombi
+    const pIndex = Math.floor(Math.random() * phraseCodes.length);
+    const sIndex = Math.floor(Math.random() * symbolCodes.length);
+    const cIndex = Math.floor(Math.random() * 2); // 0 = White, 1 = Black
+
+    phraseCode = phraseCodes[pIndex];
+    symbolCode = symbolCodes[sIndex];
+    colorCode = cIndex === 0 ? 'White' : 'Black';
+  } else {
+    // Werte aus den Auswahlscreens
+    let pIndex = parseInt(localStorage.getItem('selectedPhraseIndex') || '0', 10);
+    let sIndex = parseInt(localStorage.getItem('selectedSymbolIndex') || '0', 10);
+    const storedColor = localStorage.getItem('selectedColor') || 'White';
+
+    if (isNaN(pIndex) || pIndex < 0 || pIndex >= phraseCodes.length) pIndex = 0;
+    if (isNaN(sIndex) || sIndex < 0 || sIndex >= symbolCodes.length) sIndex = 0;
+
+    phraseCode = phraseCodes[pIndex];
+    symbolCode = symbolCodes[sIndex];
+    colorCode = storedColor === 'Black' ? 'Black' : 'White';
+  }
+
+  const finalPath = `AntiNaziSticker/${phraseCode}_${symbolCode}_${colorCode}.png`;
+  localStorage.setItem('finalStickerPath', finalPath);
+  return finalPath;
 }
