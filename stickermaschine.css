@@ -234,14 +234,14 @@ html, body {
 
 /* grauer Balken für den Spruch */
 .phrase-box {
-  margin-top: 150px;
+  margin-top: 175px;
   padding: 1rem 3rem;
   background: #d9d9d9;
 }
 
 .phrase-text {
   font-family: "Jersey 10", sans-serif;
-  font-size: 8rem;
+  font-size: 5rem;
   color: #000;
   white-space: nowrap;
 }
@@ -307,13 +307,13 @@ html, body {
 
 /* ▲ nach oben */
 .symbol-arrow-up {
-  top: 32vh;                        /* <<< HIER Y-POSITION OBERER PFEIL */
+  top: 29vh;                        /* <<< HIER Y-POSITION OBERER PFEIL */
   clip-path: polygon(50% 0, 0 100%, 100% 100%);
 }
 
 /* ▼ nach unten */
 .symbol-arrow-down {
-  top: 63vh;                        /* <<< HIER Y-POSITION UNTERER PFEIL */
+  top: 66vh;                        /* <<< HIER Y-POSITION UNTERER PFEIL */
   clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 

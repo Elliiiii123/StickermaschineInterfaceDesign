@@ -2,23 +2,26 @@ console.log('steuerung.js geladen – Screen:', document.body.dataset.screen);
 
 // Spruch-Liste für spruchwahl.html
 const phrases = [
-  'Spruch 1',
-  'Spruch 2',
-  'Spruch 3',
-  'Spruch 4',
-  'Spruch 5'
+  'Love Cats hate Fascism',
+  'Nazi Freie Zone',
+  'Ruhig Brauner',
+  'Nazis verschwinden!',
+  'Antifaschismus zum Aufkleben',
+  'Sorry, der Nazisticker war hässlich',
+  'Upsi, hier stand mal was Peinliches'
 ];
 
 // Symbol-Liste für symbolwahl.html
 const symbols = [
-  'symbol1.png',
-  'symbol2.png',
-  'symbol3.png',
-  'symbol4.png',
-  'symbol5.png'
+  'Symbole/JustText.png',
+  'Symbole/Cat.png',
+  'Symbole/Fairy.png',
+  'Symbole/Fist.png',
+  'Symbole/Spray.png'
 ];
 let currentSymbolIndex = 0;
 let currentPhraseIndex = 0; // Start bei Spruch 1
+
 let isPrinting = false; // verhindert mehrfaches Auslösen auf dem Druck-Screen
 let highlightedText = null;
 // Lade die gespeicherte Auswahl, falls vorhanden
@@ -26,6 +29,25 @@ let lastModeSelection = localStorage.getItem('modeSelection') || 'selbermachen';
 console.log('Steuerung geladen, Screen:', document.body.dataset.screen);
 let isSelected = false; // Diese Variable überwacht, ob eine Auswahl getroffen wurde
 let isColorSelected = false;
+
+// === Initialzustand beim Laden setzen ===
+const initialScreen = document.body.dataset.screen || 'unknown';
+
+// Spruchwahl: direkt ersten Spruch aus dem Array anzeigen
+if (initialScreen === 'spruch') {
+  const phraseElement = document.querySelector('.phrase-text');
+  if (phraseElement) {
+    phraseElement.textContent = phrases[currentPhraseIndex]; // = phrases[0]
+  }
+}
+
+// Symbolwahl: direkt erstes Symbol anzeigen
+if (initialScreen === 'symbol') {
+  const symbolImg = document.querySelector('.symbol-image');
+  if (symbolImg) {
+    symbolImg.src = symbols[currentSymbolIndex]; // = symbols[0]
+  }
+}
 
 // globaler Key-Listener für ALLE Seiten
 document.addEventListener('keydown', function (event) {
