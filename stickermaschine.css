@@ -54,29 +54,49 @@ html, body {
   line-height: 1.4;
 }
 
-/* Retro-8-Bit-Button */
+/* Retro-8-Bit-Button im pixel2-Look */
 .start-button {
   padding: 1.8rem 5rem;
-  font-family: "Press Start 2P", system-ui, sans-serif;
-  font-size: 8rem;
+  display: inline-block;
   font-family: "Jersey 10", sans-serif;
+  font-size: 8rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #000;
-
-  background-color: #e8e9e5;
-  border: 4px solid #000;
-  border-radius: 0;           /* keine runden Ecken, schön kantig */
+  color: #ffffff;
+  border: none;
   cursor: pointer;
+  position: relative;
+  z-index: 2;
 
-  /* „Pixel“-Schatten */
-  box-shadow: 10px 10px 0 #000;
 }
 
-/* kleine Hover-Animation im Game-Look */
+/* äußerer Pixel-Rand (grober Layer) */
+.start-button::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: -12px;
+  right: -12px;
+  background: #000;
+  z-index: -2;
+}
+
+/* innerer Pixel-Rand (feiner Layer) */
+.start-button::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: -6px;
+  right: -6px;
+  background: #000;
+  z-index: -1;
+}
+
+/* Hover/Active wie gehabt */
 .start-button:hover {
   transform: translate(3px, 3px);
-  box-shadow: 7px 7px 0 #000;
 }
 
 .start-button:active {
