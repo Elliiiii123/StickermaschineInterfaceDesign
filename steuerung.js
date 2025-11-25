@@ -42,6 +42,40 @@ const symbolCodes = [
   'Spray'
 ];
 
+// ===== Sounds =====
+const SOUND_PATH = 'Sounds/';
+
+// HIER trägst du deine Dateinamen ein:
+const soundConfig = {
+  background: 'ambient-noise-when-tuning-into-fm-radio-431515.mp3', // Dauerschleife im Hintergrund
+  arrow: 'retro-select-236670.mp3',            // bei ArrowUp / ArrowDown
+  confirm: 'retro-blip-2-236668.mp3',        // bei Space/Enter-Bestätigung
+  printing: 'retro-game-jingleaif-14638.mp3'          // wenn der Wartescreen erscheint
+};
+
+
+let arrowSound = null;
+let printSound = null;
+
+// Effekte: jedes Mal eigenes Audio-Objekt
+function playArrowSound() {
+  const a = new Audio(SOUND_PATH + soundConfig.arrow);
+  a.volume = 0.6;
+  a.play().catch(() => {});
+}
+
+function playConfirmSound() {
+  const a = new Audio(SOUND_PATH + soundConfig.confirm);
+  a.volume = 0.6;
+  a.play().catch(() => {});
+}
+
+function playPrintSound() {
+  const a = new Audio(SOUND_PATH + soundConfig.printing);
+  a.volume = 0.8;
+  a.play().catch(() => {});
+}
+
 let currentSymbolIndex = 0;
 let currentPhraseIndex = 0;
 let isPrinting = false; // verhindert mehrfaches Auslösen auf dem Druck-Screen
@@ -102,9 +136,11 @@ if (initialScreen === 'druck' || initialScreen === 'done') {
   }
 }
 
+
 // ===== globaler Key-Listener für ALLE Seiten =====
 document.addEventListener('keydown', function (event) {
   const screen = document.body.dataset.screen || 'unknown';
+  const isConfirm = event.code === 'ArrowRight'; // früher Space, jetzt Pfeil rechts
 
   // Space soll nicht scrollen
   if (event.code === 'Space' || event.key === ' ') {
@@ -112,7 +148,10 @@ document.addEventListener('keydown', function (event) {
   }
 
   // Pfeiltasten sollen auch nicht scrollen
-  if (event.code === 'ArrowUp' || event.code === 'ArrowDown' || event.code === 'ArrowLeft') {
+  if (event.code === 'ArrowUp' || 
+    event.code === 'ArrowDown' || 
+    event.code === 'ArrowLeft' ||
+    event.code === 'ArrowRight' ) {
     event.preventDefault();
   }
 
@@ -152,8 +191,16 @@ document.addEventListener('keydown', function (event) {
   switch (screen) {
     // STARTSEITE
     case 'start':
-      if (event.code === 'Space') {
-        window.location.href = 'modus.html';
+      if (isConfirm) {
+          const btn = document.querySelector('.start-button');
+          if (btn) {
+          btn.classList.add('start-button--pressed');
+        }
+
+        playConfirmSound();
+        setTimeout(() => {
+          window.location.href = 'modus.html';
+        }, 120);
       }
       break;
 
@@ -168,6 +215,7 @@ document.addEventListener('keydown', function (event) {
         isSelected = true;
         lastModeSelection = 'selbermachen';
         localStorage.setItem('modeSelection', 'selbermachen');
+        playArrowSound();
       }
 
       if (event.code === 'ArrowUp') {
@@ -175,16 +223,22 @@ document.addEventListener('keydown', function (event) {
         isSelected = true;
         lastModeSelection = 'random';
         localStorage.setItem('modeSelection', 'random');
+        playArrowSound();
       }
 
-      if (event.code === 'Space' && isSelected) {
+      if (isConfirm && isSelected) {
+        playConfirmSound();
+        
         if (lastModeSelection === 'random') {
           // finalStickerPath zurücksetzen, damit neuer Random gewählt wird
           localStorage.removeItem('finalStickerPath');
-          window.location.href = 'praesentation.html';
+          setTimeout(() => {
+            window.location.href = 'praesentation.html';
+          }, 120);
         } else {
+        setTimeout(() => {
           window.location.href = 'spruchwahl.html';
-        }
+        }, 120);}
       }
       break;
     }
@@ -198,16 +252,21 @@ document.addEventListener('keydown', function (event) {
         currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
         phraseElement.textContent = phrases[currentPhraseIndex];
         localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
+        playArrowSound();
       }
 
       if (event.code === 'ArrowUp') {
         currentPhraseIndex = (currentPhraseIndex - 1 + phrases.length) % phrases.length;
         phraseElement.textContent = phrases[currentPhraseIndex];
         localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
+        playArrowSound();
       }
 
-      if (event.code === 'Space') {
-        window.location.href = 'symbolwahl.html';
+      if (isConfirm) {
+        playConfirmSound();
+        setTimeout(() => {
+          window.location.href = 'symbolwahl.html';
+        }, 120);
       }
       break;
     }
@@ -221,16 +280,21 @@ document.addEventListener('keydown', function (event) {
         currentSymbolIndex = (currentSymbolIndex + 1) % symbols.length;
         symbolImg.src = symbols[currentSymbolIndex];
         localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
+        playArrowSound();
       }
 
       if (event.code === 'ArrowUp') {
         currentSymbolIndex = (currentSymbolIndex - 1 + symbols.length) % symbols.length;
         symbolImg.src = symbols[currentSymbolIndex];
         localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
+        playArrowSound();
       }
 
-      if (event.code === 'Space') {
-        window.location.href = 'color.html';
+      if (isConfirm) {
+        playConfirmSound();
+        setTimeout(() => {
+          window.location.href = 'color.html';
+        }, 120);
       }
       break;
     }
@@ -246,6 +310,7 @@ document.addEventListener('keydown', function (event) {
         isColorSelected = true;
         currentColor = 'Black';
         localStorage.setItem('selectedColor', 'Black');
+        playArrowSound();
       }
 
       if (event.code === 'ArrowUp') {
@@ -253,19 +318,34 @@ document.addEventListener('keydown', function (event) {
         isColorSelected = true;
         currentColor = 'White';
         localStorage.setItem('selectedColor', 'White');
+        playArrowSound();
       }
 
-      if (event.code === 'Space' && isColorSelected) {
+      if (isConfirm && isColorSelected) {
+        playConfirmSound();
         // finalStickerPath zurücksetzen (falls vorher schon mal gedruckt)
         localStorage.removeItem('finalStickerPath');
-        window.location.href = 'praesentation.html';
+          setTimeout(() => {
+          window.location.href = 'praesentation.html';
+        }, 120);
       }
       break;
     }
 
     // PRÄSENTATION / DRUCK
     case 'druck':
-      if ((event.code === 'Space' || event.code === 'Enter') && !isPrinting) {
+      if ((isConfirm || event.code === 'Enter') && !isPrinting) {
+        const btn = document.querySelector('.print-button, .start-button');
+        if (btn) {
+          // je nach Klasse, die du im HTML verwendest
+          if (btn.classList.contains('print-button')) {
+            btn.classList.add('print-button--pressed');
+          } else {
+            btn.classList.add('start-button--pressed');
+          }
+        }
+
+        playConfirmSound();
         isPrinting = true;
         startPrintAndRedirect();
       }
@@ -273,12 +353,23 @@ document.addEventListener('keydown', function (event) {
 
     // GEDRUCKT-SCREEN
     case 'done':
-      if (event.code === 'Space') {
+      if (isConfirm) {
         // Reset für neuen Durchlauf
         localStorage.removeItem('finalStickerPath');
         window.location.href = 'startdisplay.html';
       }
       break;
+  }
+});
+
+// Button wieder "rauskommen" lassen, wenn Space/Enter losgelassen wird
+document.addEventListener('keyup', function (event) {
+  if (event.code === 'ArrowRight'  || event.code === 'Enter') {
+    document
+      .querySelectorAll('.start-button--pressed, .print-button--pressed')
+      .forEach(btn => {
+        btn.classList.remove('start-button--pressed', 'print-button--pressed');
+      });
   }
 });
 
@@ -290,6 +381,9 @@ function startPrintAndRedirect() {
   if (overlay) {
     overlay.hidden = false;
   }
+
+  // Druck-Sound abspielen
+  playPrintSound();
 
   setTimeout(function () {
     window.location.href = 'gedruckt.html';

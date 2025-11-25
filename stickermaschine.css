@@ -104,6 +104,18 @@ html, body {
   box-shadow: 4px 4px 0 #000;
 }
 
+/* Klasse für „per Tastatur gedrückt“ */
+.start-button--pressed {
+  transform: translate(6px, 6px);
+  box-shadow: 4px 4px 0 #000;
+}
+
+/* wenn du für den DRUCKEN-Button dasselbe willst */
+.print-button--pressed {
+  transform: translate(6px, 6px);
+  box-shadow: 4px 4px 0 #000;
+}
+
 /* ===== Screen 2: Modus-Auswahl ===== */
 
 .second-screen {
