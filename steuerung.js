@@ -136,6 +136,15 @@ if (initialScreen === 'druck' || initialScreen === 'done') {
   }
 }
 
+function bumpArrow(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+
+  // Animation zurücksetzen, damit sie jedes Mal neu startet
+  el.classList.remove('arrow-bump');
+  void el.offsetWidth; // Force reflow
+  el.classList.add('arrow-bump');
+}
 
 // ===== globaler Key-Listener für ALLE Seiten =====
 document.addEventListener('keydown', function (event) {
@@ -216,6 +225,7 @@ document.addEventListener('keydown', function (event) {
         lastModeSelection = 'selbermachen';
         localStorage.setItem('modeSelection', 'selbermachen');
         playArrowSound();
+        bumpArrow('.arrow-down');   // <– NEU
       }
 
       if (event.code === 'ArrowUp') {
@@ -224,6 +234,7 @@ document.addEventListener('keydown', function (event) {
         lastModeSelection = 'random';
         localStorage.setItem('modeSelection', 'random');
         playArrowSound();
+        bumpArrow('.arrow-up');     // <– NEU
       }
 
       if (isConfirm && isSelected) {
@@ -253,6 +264,7 @@ document.addEventListener('keydown', function (event) {
         phraseElement.textContent = phrases[currentPhraseIndex];
         localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
         playArrowSound();
+        bumpArrow('.arrow-down');   // <– NEU
       }
 
       if (event.code === 'ArrowUp') {
@@ -260,6 +272,7 @@ document.addEventListener('keydown', function (event) {
         phraseElement.textContent = phrases[currentPhraseIndex];
         localStorage.setItem('selectedPhraseIndex', currentPhraseIndex.toString());
         playArrowSound();
+        bumpArrow('.arrow-up');     // <– NEU
       }
 
       if (isConfirm) {
@@ -281,6 +294,7 @@ document.addEventListener('keydown', function (event) {
         symbolImg.src = symbols[currentSymbolIndex];
         localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
         playArrowSound();
+        bumpArrow('.symbol-arrow-down');   // <– NEU
       }
 
       if (event.code === 'ArrowUp') {
@@ -288,6 +302,7 @@ document.addEventListener('keydown', function (event) {
         symbolImg.src = symbols[currentSymbolIndex];
         localStorage.setItem('selectedSymbolIndex', currentSymbolIndex.toString());
         playArrowSound();
+        bumpArrow('.symbol-arrow-up');     // <– NEU
       }
 
       if (isConfirm) {
@@ -311,6 +326,7 @@ document.addEventListener('keydown', function (event) {
         currentColor = 'Black';
         localStorage.setItem('selectedColor', 'Black');
         playArrowSound();
+        bumpArrow('.arrow-down');   // <– NEU
       }
 
       if (event.code === 'ArrowUp') {
@@ -319,6 +335,7 @@ document.addEventListener('keydown', function (event) {
         currentColor = 'White';
         localStorage.setItem('selectedColor', 'White');
         playArrowSound();
+        bumpArrow('.arrow-up');     // <– NEU
       }
 
       if (isConfirm && isColorSelected) {
@@ -377,6 +394,7 @@ document.addEventListener('keyup', function (event) {
 
 // Startet „Drucken“ & Redirect
 function startPrintAndRedirect() {
+  // Schwarzes Fenster mit Drucker einblenden
   const overlay = document.getElementById('print-overlay');
   if (overlay) {
     overlay.hidden = false;
@@ -385,6 +403,7 @@ function startPrintAndRedirect() {
   // Druck-Sound abspielen
   playPrintSound();
 
+  // Nach ca. 3 Sekunden zum „gedruckt“-Screen
   setTimeout(function () {
     window.location.href = 'gedruckt.html';
   }, 3000);
